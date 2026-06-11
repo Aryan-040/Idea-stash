@@ -48,22 +48,96 @@ export function Dashboard() {
   }, [reload]);
 
   async function handleSearch() {
-    if (!searchQuery.trim()) {
+    const q = searchQuery.trim();
+    if (!q) {
       setSearchResults(null);
       return;
     }
-    try {
-      const { data } = await searchApi.search({
-        q: searchQuery,
-        mode: semanticSearch ? "semantic" : "text",
-        ...(selectedCategory ? { contentType: selectedCategory } : {}),
-        ...(activeTag ? { tag: activeTag } : {}),
-      });
-      setSearchResults(data.content);
-    } catch {
-      toast("Search failed", "error");
+
+    // If AI semantic search is enabled, defer to server-side semantic search
+    if (semanticSearch) {
+      try {
+        const { data } = await searchApi.search({
+          q: q,
+          mode: "semantic",
+          ...(selectedCategory ? { contentType: selectedCategory } : {}),
+          ...(activeTag ? { tag: activeTag } : {}),
+        });
+        setSearchResults(data.content);
+      } catch {
+        toast("Search failed", "error");
+      }
+      return;
     }
+
+    // Client-side case-insensitive substring matching across title, description, url, and tags
+    const term = q.toLowerCase();
+    const filtered = content.filter((item) => {
+      // Respect selected category and active tag filters when present
+      if (selectedCategory && item.contentType !== selectedCategory) return false;
+      if (activeTag && !(item.tags ?? []).map((t) => String(t)).includes(activeTag)) return false;
+
+      const title = (item.title ?? "").toLowerCase();
+      const description = ((item.summary ?? item.metadata?.description) ?? "").toLowerCase();
+      const url = (item.url ?? item.link ?? "").toLowerCase();
+      const tags = (item.tags ?? []).map((t) => String(t).toLowerCase());
+
+      return (
+        title.includes(term) ||
+        description.includes(term) ||
+        url.includes(term) ||
+        tags.some((t) => t.includes(term))
+      );
+    });
+    setSearchResults(filtered);
   }
+
+  // Update results immediately while typing (debounced). Uses same matching rules as handleSearch
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q) {
+      setSearchResults(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      if (semanticSearch) {
+        try {
+          const { data } = await searchApi.search({
+            q: q,
+            mode: "semantic",
+            ...(selectedCategory ? { contentType: selectedCategory } : {}),
+            ...(activeTag ? { tag: activeTag } : {}),
+          });
+          setSearchResults(data.content);
+        } catch {
+          toast("Search failed", "error");
+        }
+        return;
+      }
+
+      const term = q.toLowerCase();
+      const filtered = content.filter((item) => {
+        if (selectedCategory && item.contentType !== selectedCategory) return false;
+        if (activeTag && !(item.tags ?? []).map((t) => String(t)).includes(activeTag)) return false;
+
+        const title = (item.title ?? "").toLowerCase();
+        const description = ((item.summary ?? item.metadata?.description) ?? "").toLowerCase();
+        const url = (item.url ?? item.link ?? "").toLowerCase();
+        const tags = (item.tags ?? []).map((t) => String(t).toLowerCase());
+
+        return (
+          title.includes(term) ||
+          description.includes(term) ||
+          url.includes(term) ||
+          tags.some((t) => t.includes(term))
+        );
+      });
+      setSearchResults(filtered);
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, semanticSearch, content, selectedCategory, activeTag]);
 
   async function handleShare() {
     try {
