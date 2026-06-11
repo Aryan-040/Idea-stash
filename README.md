@@ -5,8 +5,6 @@ A simple "second brain" web application to save and enrich links (YouTube videos
 - `idea-stash-client` — a React + Vite front-end (TypeScript + Tailwind)
 - `idea-stash-server` — an Express + TypeScript backend with MongoDB and optional OpenAI integration
 
-This README gives a clean, opinionated guide to getting the project running locally, how to develop, and how to deploy.
-
 ---
 
 ## Highlights
@@ -227,15 +225,3 @@ If you want to add features like multi-user support, bookmarking, or better AI n
 - CORS or share link issues: confirm `FRONTEND_URL` matches your dev server origin.
 
 ---
-
-## License
-
-This project is provided as-is. Add an appropriate open source license if you plan to share it publicly.
-
----
-
-If you'd like, I can:
-- Beautify this README further with badges, GIFs/screenshots, and a quick start section tailored to Docker or Docker Compose.
-- Add a Docker Compose file to start MongoDB + server + client for a single-command local dev environment.
-
-Which would you prefer next?
