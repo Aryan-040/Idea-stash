@@ -1,0 +1,28 @@
+import { Dashboard } from "./pages/Dashboard";
+import { Signin } from "./pages/Signin";
+import { Signup } from "./pages/Signup";
+import { SharedBrain } from "./pages/SharedBrain";
+import { ProtectedRoute } from "./components/layout/ProtectedRoute";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Signup />} />
+        <Route path="/signin" element={<Signin />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/share/:shareId" element={<SharedBrain />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;
