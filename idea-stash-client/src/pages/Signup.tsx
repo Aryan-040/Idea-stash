@@ -44,7 +44,7 @@ export function Signup() {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-3">
             Idea Stash
           </h1>
-          <p className="text-gray-600">Your AI-powered second brain</p>
+          <p className="text-gray-600">Your second brain</p>
         </div>
 
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 p-8">
