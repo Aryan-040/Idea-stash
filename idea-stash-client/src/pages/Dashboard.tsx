@@ -4,15 +4,12 @@ import { CreateContentModal } from "../components/ui/Create-Content-Modal";
 import { EmptyState } from "../components/ui/EmptyState";
 import { ContentCardSkeleton } from "../components/ui/Skeleton";
 import { RichContentCard } from "../components/cards/RichContentCard";
-import { StatsBar } from "../components/dashboard/StatsBar";
 import { SearchBar } from "../components/dashboard/SearchBar";
 import { CollectionSidebar } from "../components/dashboard/CollectionSidebar";
 import { PlusIcon } from "../icons/PlusIcon";
 import { ShareIcon } from "../icons/ShareIcon";
 import { Logo } from "../icons/Logo";
 import { useContent } from "../hooks/useContent";
-// collections removed
-import { useDashboard } from "../hooks/useDashboard";
 import { shareApi, searchApi, tagsApi } from "../api";
 import { useToast } from "../hooks/useToast";
 import { useNavigate } from "react-router-dom";
@@ -33,7 +30,7 @@ export function Dashboard() {
   const [tags, setTags] = useState<{ name: string; count: number }[]>([]);
 
   const { content, loading, refresh, loadMore, pagination } = useContent();
-  const { stats, loading: statsLoading, refresh: refreshStats } = useDashboard();
+  // stats removed to keep a minimal content-focused UI
 
   const displayContent = searchResults ?? content;
 
@@ -41,11 +38,10 @@ export function Dashboard() {
     const params: Record<string, string | number> = {};
     if (selectedCategory) params.contentType = selectedCategory;
     if (activeTag) params.tag = activeTag;
-    refresh(params);
-    refreshStats();
+  refresh(params);
     tagsApi.list().then(({ data }) => setTags(data.tags)).catch(() => {});
     setSearchResults(null);
-  }, [activeTag, refresh, refreshStats, selectedCategory]);
+  }, [activeTag, refresh, selectedCategory]);
 
   useEffect(() => {
     reload();
@@ -122,15 +118,13 @@ export function Dashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        <StatsBar stats={stats} loading={statsLoading} />
-
         <SearchBar
           value={searchQuery}
           onChange={setSearchQuery}
           onSearch={handleSearch}
           semantic={semanticSearch}
           onToggleSemantic={() => setSemanticSearch((s) => !s)}
-          aiEnabled={stats?.aiEnabled}
+          aiEnabled={false}
         />
 
         {/* Tag filters */}
@@ -204,7 +198,7 @@ export function Dashboard() {
                             item={item}
                             onDelete={reload}
                             onRegenerate={reload}
-                            aiEnabled={stats?.aiEnabled}
+                    aiEnabled={false}
                           />
                         </div>
                       );
@@ -219,7 +213,7 @@ export function Dashboard() {
                               item={item}
                               onDelete={reload}
                               onRegenerate={reload}
-                              aiEnabled={stats?.aiEnabled}
+                      aiEnabled={false}
                             />
                           </div>
                         </div>
@@ -232,7 +226,7 @@ export function Dashboard() {
                             item={item}
                             onDelete={reload}
                             onRegenerate={reload}
-                            aiEnabled={stats?.aiEnabled}
+                    aiEnabled={false}
                           />
                         </div>
                       );
@@ -244,7 +238,7 @@ export function Dashboard() {
                             item={item}
                             onDelete={reload}
                             onRegenerate={reload}
-                            aiEnabled={stats?.aiEnabled}
+                    aiEnabled={false}
                           />
                         </div>
                       );
@@ -256,7 +250,7 @@ export function Dashboard() {
                           item={item}
                           onDelete={reload}
                           onRegenerate={reload}
-                          aiEnabled={stats?.aiEnabled}
+                  aiEnabled={false}
                         />
                       </div>
                     );
