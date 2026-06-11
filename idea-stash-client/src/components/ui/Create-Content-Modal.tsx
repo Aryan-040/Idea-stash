@@ -24,39 +24,86 @@ export function CreateContentModal({
   const tagsRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<LinkPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [urlValue, setUrlValue] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) {
       setPreview(null);
+      setUrlValue("");
+      setPreviewError(null);
     }
   }, [open]);
 
-  async function handleUrlBlur() {
-    const raw = urlRef.current?.value.trim();
-    const url = normalizeUrl(raw);
-    if (!url) {
+  // Dedicated fetch function for link previews
+  async function fetchLinkPreview(rawUrl: string) {
+    const normalized = normalizeUrl(rawUrl);
+    if (!normalized) {
       setPreview(null);
+      setPreviewError(null);
+      return;
+    }
+
+    // quick validation
+    try {
+      // will throw if invalid
+      // eslint-disable-next-line no-new
+      new URL(normalized);
+    } catch (e) {
+      setPreview(null);
+      setPreviewError("Invalid URL");
       return;
     }
 
     setPreviewLoading(true);
+    setPreviewError(null);
     try {
-      const { data } = await contentApi.preview(url);
+      const { data } = await contentApi.preview(normalized);
       setPreview(data);
-    } catch {
+    } catch (err) {
+      // If preview fetch fails, show a lightweight error but still allow saving
       setPreview({
-        contentType: detectContentTypeFromUrl(url) as LinkPreview["contentType"],
-        title: url,
+        contentType: detectContentTypeFromUrl(normalized) as LinkPreview["contentType"],
+        title: normalized,
         metadata: {},
       });
+      setPreviewError("Preview unavailable");
     } finally {
       setPreviewLoading(false);
     }
   }
 
+  // Previously preview was fetched on blur — now we fetch on paste and onChange (debounced)
+  function handleUrlPaste(e: React.ClipboardEvent<HTMLInputElement>) {
+    const paste = e.clipboardData.getData("text");
+    if (paste) {
+      setUrlValue(paste.trim());
+      // fetch immediately on paste
+      fetchLinkPreview(paste.trim());
+    }
+  }
+
+  // Debounced fetching while typing
+  useEffect(() => {
+    const q = urlValue.trim();
+    if (!q) {
+      setPreview(null);
+      setPreviewError(null);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      fetchLinkPreview(q);
+    }, 600); // 600ms debounce
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlValue]);
+
   async function addContent() {
-    const raw = urlRef.current?.value.trim();
+
+    const raw = urlValue?.trim() ?? urlRef.current?.value.trim();
     const url = normalizeUrl(raw);
     if (!url) {
       toast("Please paste a URL", "error");
@@ -70,7 +117,8 @@ export function CreateContentModal({
 
     setSaving(true);
     try {
-      await contentApi.create({ url, tags });
+      // include preview data if available — server may ignore extra fields
+      await contentApi.create({ url, tags, previewData: preview });
       toast("Content saved!", "success");
       onCreated();
       onClose();
@@ -112,7 +160,9 @@ export function CreateContentModal({
             <InputBox
               ref={urlRef}
               placeholder="https://youtube.com/watch?v=..."
-              onBlur={handleUrlBlur}
+              value={urlValue}
+              onChange={(e) => setUrlValue(e.target.value)}
+              onPaste={handleUrlPaste}
             />
             <p className="text-xs text-gray-400 mt-1">
               Supports YouTube, Twitter/X, GitHub, articles, and websites
@@ -121,6 +171,12 @@ export function CreateContentModal({
 
           {previewLoading && (
             <div className="h-24 bg-gray-100 rounded-xl animate-pulse" />
+          )}
+
+          {previewError && !previewLoading && (
+            <div className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-100 rounded-md p-2">
+              {previewError}
+            </div>
           )}
 
           {preview && !previewLoading && (
@@ -163,6 +219,7 @@ export function CreateContentModal({
             size="md"
             text={saving ? "Saving..." : "Save to Brain"}
             onClick={addContent}
+            disabled={previewLoading || saving}
             fullWidth
           />
         </div>

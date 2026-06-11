@@ -24,6 +24,8 @@ export const contentApi = {
     title?: string;
     tags?: string[];
     collectionId?: string;
+    // optional preview data may be sent by the client but server can ignore it
+    previewData?: any;
   }) => api.post<{ content: ContentItem }>("/content", data),
   delete: (contentId: string) =>
     api.delete("/delete", { data: { contentId } }),

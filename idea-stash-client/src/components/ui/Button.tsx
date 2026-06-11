@@ -8,6 +8,7 @@ export interface ButtonProps {
   endIcon?: ReactElement;
   onClick?: () => void;
   fullWidth?: boolean;
+  disabled?: boolean;
 }
 
 const Variants = {
@@ -26,12 +27,16 @@ const defaultStyles =
   "rounded-lg flex items-center justify-center font-medium cursor-pointer transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-purple-500";
 
 export const Button = (props: ButtonProps) => {
+  const disabledStyles = props.disabled
+    ? "opacity-60 cursor-not-allowed pointer-events-none"
+    : "";
   return (
     <button
       onClick={props.onClick}
+      disabled={props.disabled}
       className={`${Variants[props.variant]} ${defaultStyles} ${
         SizeStyles[props.size]
-      } ${props.fullWidth ? "w-full" : ""}`}
+      } ${props.fullWidth ? "w-full" : ""} ${disabledStyles}`}
     >
       {props.startIcon && (
         <div className="flex items-center justify-center mr-2">
